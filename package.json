@@ -1,0 +1,44 @@
+{
+  "name": "@ce-net/iam",
+  "version": "0.1.0",
+  "description": "TypeScript SDK over ce-iam-core-wasm: the CE secrets vault (openVault/recover/get/put/grant) + capability verify, byte-for-byte with the ce-iam CLI and the ce-secrets JS reference. Drop-in for ce-cast's vendored vault.",
+  "license": "MIT",
+  "author": "Leif Rydenfalk <ledamecrydenfalk@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ce-net/ce-iam"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./store": {
+      "types": "./dist/store.d.ts",
+      "import": "./dist/store.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-wasm.mjs",
+    "test": "node --test test/",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "ce",
+    "iam",
+    "secrets",
+    "vault",
+    "capabilities",
+    "wasm"
+  ],
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
