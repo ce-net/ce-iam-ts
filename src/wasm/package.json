@@ -1,0 +1,31 @@
+{
+  "name": "ce-iam-core-wasm",
+  "type": "module",
+  "collaborators": [
+    "Leif Rydenfalk <ledamecrydenfalk@gmail.com>"
+  ],
+  "description": "wasm-bindgen port of ce-iam-core: the CE secrets vault (open/recover/get/put/grant) + capability VERIFY for the browser, byte-for-byte with the ce-iam CLI and the ce-secrets JS reference.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ce-net/ce-iam"
+  },
+  "files": [
+    "ce_iam_core_wasm_bg.wasm",
+    "ce_iam_core_wasm.js",
+    "ce_iam_core_wasm.d.ts"
+  ],
+  "main": "ce_iam_core_wasm.js",
+  "types": "ce_iam_core_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ],
+  "keywords": [
+    "ce",
+    "iam",
+    "secrets",
+    "wasm",
+    "vault"
+  ]
+}
