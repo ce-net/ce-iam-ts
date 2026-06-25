@@ -27,7 +27,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-wasm.mjs",
-    "test": "node --test test/",
+    "test": "node --test 'test/**/*.test.mjs'",
     "clean": "rm -rf dist"
   },
   "keywords": [
