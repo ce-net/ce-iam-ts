@@ -77,3 +77,20 @@ The crypto/vault core is now the wasm (one implementation), not vendored `crypto
 - `verify({ selfId, requester, action, chain, acceptedRoots?, selfTags?, revoked?, now? }):
   Promise<boolean>` — `ce_cap::authorize`; returns `true` or throws the denial reason.
 - `VaultStore` / `StoreEntry` / `MemStore` (also at `@ce-net/iam/store`).
+
+### Passwordless node-auth (`@ce-net/iam/nodeauth`)
+
+"Log in with your local CE node" — authorize an app via your own node instead of a password. Also
+re-exported from the package root.
+
+- `authorizeApp(options: AuthorizeAppOptions): Promise<AppGrant>` — ask your local node to mint an
+  app grant over the mesh.
+- `discoverNodes(transport: MeshTransport): Promise<NodeInfo[]>` — find candidate nodes that can
+  authenticate you.
+- `T_ANNOUNCE`, `tReq(...)`, `tResp(...)` — the mesh topic + request/response helpers.
+- Types: `MeshTransport`, `MeshMessage`, `NodeInfo`, `AuthorizeAppOptions`, `AppGrant`.
+
+## License
+
+AGPL-3.0-only. A commercial license is also available — see [`LICENSING.md`](./LICENSING.md)
+and [`COMMERCIAL-LICENSE.md`](./COMMERCIAL-LICENSE.md).

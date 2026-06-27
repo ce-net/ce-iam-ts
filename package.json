@@ -2,7 +2,7 @@
   "name": "@ce-net/iam",
   "version": "0.1.0",
   "description": "TypeScript SDK over ce-iam-core-wasm: the CE secrets vault (openVault/recover/get/put/grant) + capability verify, byte-for-byte with the ce-iam CLI and the ce-secrets JS reference. Drop-in for ce-cast's vendored vault.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": "Leif Rydenfalk <ledamecrydenfalk@gmail.com>",
   "repository": {
     "type": "git",
