@@ -27,8 +27,9 @@ export interface MeshMessage {
 }
 
 /**
- * The minimal mesh surface `authorizeApp` needs, mapped 1:1 onto a node bridge's
- * `request`/`stream`. Implement it once per app over your transport (see ce-cast's `meshTransport`).
+ * The minimal mesh surface `authorizeApp` needs, mapped onto a node bridge. `subscribe`/`publish`/
+ * `onMessage` drive gossip DISCOVERY (the announce broadcast); `request` is the reliable DIRECTED
+ * point-to-point RPC the vouch itself uses. Implement once per app (see ce-cast's `meshTransport`).
  */
 export interface MeshTransport {
   /** Subscribe to a gossipsub topic (`POST /mesh/subscribe`). */
@@ -37,13 +38,17 @@ export interface MeshTransport {
   publish(topic: string, payloadHex: string): Promise<void>;
   /** Subscribe to the inbound message stream; returns an unsubscribe fn. */
   onMessage(cb: (m: MeshMessage) => void): () => void;
+  /** Directed request/reply to a node (`POST /mesh/request`); resolves to the reply's payload hex. */
+  request(to: string, topic: string, payloadHex: string, timeoutMs: number): Promise<string>;
 }
 
-/** The well-known node-announce topic. */
+/** The well-known node-announce topic (gossip broadcast; discovery). */
 export const T_ANNOUNCE = "ce-iam/nodes/announce";
-/** The per-node vouch-request topic. */
+/** The DIRECTED vouch request/reply topic (reliable point-to-point RPC). */
+export const T_DIRECT = "ce-iam/auth";
+/** The per-node vouch-request topic (legacy gossip path). */
 export const tReq = (nodeId: string): string => `ce-iam/auth/req/${nodeId}`;
-/** The per-peer vouch-response topic. */
+/** The per-peer vouch-response topic (legacy gossip path). */
 export const tResp = (peerId: string): string => `ce-iam/auth/resp/${peerId}`;
 
 /** A discovered local node. */
@@ -129,54 +134,45 @@ export async function discoverNodes(t: MeshTransport, ms = 2500): Promise<NodeIn
 }
 
 /**
- * Ask your local node to authorize this app: discover it (or use `opts.nodeId`), request the abilities,
- * and resolve with the node-signed capability. Rejects if no node answers within `timeoutMs`.
+ * Ask your local node to authorize this app: discover it (or use `opts.nodeId`), then send a reliable
+ * DIRECTED request for the abilities and resolve with the node-signed capability. Uses point-to-point
+ * `/mesh/request` (not gossip), so it works whether the node is your rail or reached over the mesh.
  */
 export async function authorizeApp(t: MeshTransport, opts: AuthorizeAppOptions): Promise<AppGrant> {
   const name = opts.name ?? "app";
-  const timeoutMs = opts.timeoutMs ?? 60_000;
+  const timeoutMs = opts.timeoutMs ?? 15_000;
   let nodeId = opts.nodeId;
   if (!nodeId) {
-    const nodes = await discoverNodes(t, opts.discoverMs ?? 2500);
+    const nodes = await discoverNodes(t, opts.discoverMs ?? 6000);
     nodeId = nodes[0]?.nodeId;
     if (!nodeId) throw new Error("no local CE node found (is your node running `ce-iam nodeauth`?)");
   }
   const peerId = opts.peerId;
   const nonce = randHex(16);
-  await t.subscribe(tResp(peerId));
-
-  const grant = new Promise<AppGrant>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      off();
-      reject(new Error("node did not authorize in time"));
-    }, timeoutMs);
-    const off = t.onMessage((m) => {
-      if (m.topic !== tResp(peerId)) return;
-      try {
-        const p = JSON.parse(td.decode(fromHex(m.payload_hex))) as {
-          nonce?: string;
-          cap?: string;
-          nodeId?: string;
-          name?: string;
-          abilities?: string[];
-        };
-        if (p.nonce !== nonce || !p.cap || !p.nodeId) return;
-        clearTimeout(timer);
-        off();
-        resolve({
-          cap: p.cap,
-          node: p.nodeId,
-          peerId,
-          abilities: p.abilities ?? [],
-          name: p.name ?? name,
-        });
-      } catch {
-        // ignore undecodable response
-      }
-    });
-  });
-
-  const reqBody = JSON.stringify({ peerId, name, nonce, abilities: opts.abilities });
-  await t.publish(tReq(nodeId), toHex(te.encode(reqBody)));
-  return grant;
+  const reqHex = toHex(te.encode(JSON.stringify({ peerId, name, nonce, abilities: opts.abilities })));
+  // Retry the directed RPC: the FIRST request after an idle period can time out while the requester's
+  // node re-warms its connection / hole-punch to a NAT'd owner node (504/502). A couple of retries make
+  // the global path reliable end-to-end, so the user never has to click "link" twice.
+  const perTry = Math.min(timeoutMs, 8000);
+  let replyHex: string | undefined;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3 && replyHex === undefined; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
+    try {
+      replyHex = await t.request(nodeId, T_DIRECT, reqHex, perTry);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (replyHex === undefined) {
+    throw new Error(`node did not authorize: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`);
+  }
+  const p = JSON.parse(td.decode(fromHex(replyHex))) as {
+    cap?: string;
+    nodeId?: string;
+    name?: string;
+    abilities?: string[];
+  };
+  if (!p.cap || !p.nodeId) throw new Error("node returned no capability");
+  return { cap: p.cap, node: p.nodeId, peerId, abilities: p.abilities ?? [], name: p.name ?? name };
 }
