@@ -34,6 +34,20 @@ import { type VaultStore, type StoreEntry, MemStore } from "./store.js";
 
 export { type VaultStore, type StoreEntry, MemStore };
 
+// Passwordless app authorization via your local CE node (the reusable consent primitive).
+export {
+  authorizeApp,
+  discoverNodes,
+  T_ANNOUNCE,
+  tReq,
+  tResp,
+  type MeshTransport,
+  type MeshMessage,
+  type NodeInfo,
+  type AuthorizeAppOptions,
+  type AppGrant,
+} from "./nodeauth.js";
+
 // ---- wasm module init ---------------------------------------------------------------------------
 
 let wasmReady: Promise<void> | null = null;

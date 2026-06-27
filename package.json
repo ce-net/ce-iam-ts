@@ -19,6 +19,10 @@
     "./store": {
       "types": "./dist/store.d.ts",
       "import": "./dist/store.js"
+    },
+    "./nodeauth": {
+      "types": "./dist/nodeauth.d.ts",
+      "import": "./dist/nodeauth.js"
     }
   },
   "files": [
