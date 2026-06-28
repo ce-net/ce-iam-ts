@@ -48,6 +48,10 @@ export {
   type AppGrant,
 } from "./nodeauth.js";
 
+// Named mesh identities (libp2p keypairs) managed in the vault — the reusable home for "create/list/
+// select a player identity" so apps don't reinvent keypair gen + vault wiring + the node-vouch flow.
+export { Identities, IdbStore, type Identity, type IdentitiesOptions } from "./identity.js";
+
 // ---- wasm module init ---------------------------------------------------------------------------
 
 let wasmReady: Promise<void> | null = null;
