@@ -1,6 +1,6 @@
 # @ce-net/iam
 
-The TypeScript SDK over [`ce-iam-core-wasm`](../ce-iam-core-wasm): the CE **secrets vault** +
+The TypeScript SDK over `ce-iam-core-wasm` (github.com/ce-net/ce-iam-core-wasm): the CE **secrets vault** +
 **capability verify** for the browser and Node. All crypto and vault orchestration runs in the wasm
 module — the SAME Rust code the `ce-iam` CLI runs — so the SDK, the CLI, and the `ce-secrets` JS
 reference agree byte-for-byte (golden-vectored). This SDK only marshals JSON across the wasm boundary
